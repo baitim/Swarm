@@ -2,6 +2,8 @@ CFLAGS   = -O3
 
 LFLAGS   = -lm -lpthread `sdl2-config --cflags --libs` -lSDL2 -lSDL2_ttf
 
+VALGRIND_FLAGS = # valgrind --leak-check=full
+
 CPP      = gcc
 LINKER   = gcc
 rm       = rm -rf
@@ -45,4 +47,4 @@ clean:
 
 .PHONY: run
 run:
-	@./$(TARGET) $(CMD_FLAGS)
+	@$(VALGRIND_FLAGS) ./$(TARGET) $(CMD_FLAGS)

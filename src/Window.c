@@ -12,7 +12,7 @@ void add_state_info (SDL_Renderer** renderer, TTF_Font* font, char* fps_string,
                      clock_t clock_begin, clock_t clock_end, double* old_fps);
 
 void window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** renderer,
-                    Uint8** pixels, TTF_Font** font)
+                    Uint8** pixels, TTF_Font** font, State_t* state)
 {
     SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -29,8 +29,14 @@ void window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** r
     *texture = SDL_CreateTexture(*renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING,
                                  WIN_WIDTH, WIN_HEIGHT);
 
-    *pixels = calloc(sizeof(Uint8), WIN_SIZE * 4);
+    *pixels = calloc(sizeof(Uint8), PIX_SIZE);
 
+    for (int i = 0; i < PIX_SIZE; i += 4) {
+        state->background[i + 0] = 70;
+        state->background[i + 1] = 70;
+        state->background[i + 2] = 70;
+        state->background[i + 3] = 255;
+    }
 
     *font = TTF_OpenFont("arial.ttf", 40);
 }
@@ -38,7 +44,7 @@ void window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** r
 void window_cycle(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** renderer,
                   Uint8** pixels, TTF_Font** font, State_t* state)
 {
-    Uint8* texture_pixels = calloc(sizeof(Uint8), WIN_SIZE * 4);
+    Uint8* texture_pixels = calloc(sizeof(Uint8), PIX_SIZE);
     char* fps_string = calloc(MAX_SIZE_INFO_STR, sizeof(char));
  
     double old_fps = 0.f;
@@ -47,12 +53,12 @@ void window_cycle(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** ren
     while (1) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT)
-                return;
+                goto finally;
         }
         
         lock_texture(texture, &texture_pixels);
         render_state(*pixels, state);
-        memcpy(texture_pixels, *pixels, WIN_SIZE * 4 * sizeof(Uint8));
+        memcpy(texture_pixels, *pixels, PIX_SIZE * sizeof(Uint8));
         SDL_UnlockTexture(*texture);
         SDL_RenderCopy(*renderer, *texture, NULL, NULL);
 
@@ -84,7 +90,7 @@ void window_delete(SDL_Window* window, SDL_Renderer* renderer, SDL_Texture* text
 
 static void lock_texture(SDL_Texture** texture, Uint8** pixels)
 {
-    int pitch = WIN_SIZE * 4;
+    int pitch = PIX_SIZE;
 
     void** void_pixels = (void**) pixels;
     SDL_LockTexture(*texture, NULL, void_pixels, &pitch);
@@ -112,7 +118,9 @@ void add_state_info(SDL_Renderer** renderer, TTF_Font* font, char* fps_string,
     double elapsed_ms = (double)(clock_end - clock_begin) / (double)(CLOCKS_PER_SEC / 1000);
     double fps = 1000.f / elapsed_ms;
     *old_fps = fps;
-    snprintf(fps_string, MAX_SIZE_INFO_STR, "fps: %.f", *old_fps);
 
-    win_print_text(fps_string, renderer, font, 10, 10, 125, 45);
-}
+    snprintf(fps_string, MAX_SIZE_INFO_STR, "fps: %.f", *old_fps);
+    fprintf(stderr, "fps_string = %s\n", fps_string);
+
+    win_print_text(fps_string, renderer, font, 10, 65, 125, 45);
+}   

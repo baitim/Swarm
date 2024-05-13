@@ -11,6 +11,7 @@ int main()
 {
     printf(print_lblue("# Implementation of swarm.\n"
                        "# (c) Baidiusenov Timur, 2024\n\n"));
+
     srand((unsigned int)time(NULL));
 
     SDL_Window* window      = NULL;
@@ -20,7 +21,9 @@ int main()
     TTF_Font* font          = NULL;
     State_t state = {};
 
-    window_prepare(&window, &texture, &renderer, &pixels, &font);
+    entities_generate(state.entities);
+
+    window_prepare(&window, &texture, &renderer, &pixels, &font, &state);
 
     window_cycle(&window, &texture, &renderer, &pixels, &font, &state);
 
