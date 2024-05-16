@@ -5,20 +5,22 @@
 #define WIN_WIDTH  (int)1200
 #define WIN_SIZE   (int)WIN_WIDTH * WIN_HEIGHT
 #define PIX_SIZE   (int)WIN_SIZE * 4
-#define MAX_SIZE_INFO_STR (int)100
-#define COUNT_ENTITY 10
-#define COUNT_RENDER_THREADS 3
-#define DIR_ALPHA_PRECISION 10000
-#define ENTITY_RADIUS 7
+#define MAX_SIZE_INFO_STR       (int)100
+#define COUNT_ENTITY            (int)100
+#define COUNT_RENDER_THREADS    (int)3
+#define DIR_ALPHA_PRECISION     (int)10000
+#define ENTITY_RADIUS   (int)8
+#define BEAK_LENGTH     (int)25
+#define SPEED           (int)1.f
 
 typedef struct Vect2_t_ {
-    int x;
-    int y;
+    float x;
+    float y;
 } Vect2_t;
 
 typedef struct Entity_t_ {
     Vect2_t pos;
-    int alpha;
+    float alpha;
 } Entity_t;
 
 typedef struct State_t_ {

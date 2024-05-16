@@ -4,6 +4,8 @@
 
 #include "Render.h"
 
+#define M_PI 3.14159265358979323846
+#define EPSILON 1e-8
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -14,6 +16,9 @@ typedef struct RenderThreadInfo_t_ {
 } RenderThreadInfo_t;
 
 void* render_in_thread(void* render_thread_info);
+static void render_entity(Uint8* pixels, int x1, int y1, int x2, int y2, int cx, int cy, int alpha);
+static float area(float x1, float y1, float x2, float y2, float x3, float y3);
+static int is_inside_triangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 
 void render_state(Uint8* pixels, State_t* state)
 {
@@ -50,24 +55,61 @@ void* render_in_thread(void* render_thread_info_)
     for (int i = 0; i < count; i++) {
         int cx = entities[i].pos.x;
         int cy = entities[i].pos.y;
-        int x1 = MAX(0, cx - ENTITY_RADIUS);
-        int y1 = MAX(0, cy - ENTITY_RADIUS);
-        int x2 = MIN(WIN_WIDTH  - 1, cx + ENTITY_RADIUS);
-        int y2 = MIN(WIN_HEIGHT - 1, cy + ENTITY_RADIUS);
+        int alpha = entities[i].alpha;
+        int x1 = MAX(0, cx - ENTITY_RADIUS - BEAK_LENGTH);
+        int y1 = MAX(0, cy - ENTITY_RADIUS - BEAK_LENGTH);
+        int x2 = MIN(WIN_WIDTH  - 1, cx + ENTITY_RADIUS + BEAK_LENGTH);
+        int y2 = MIN(WIN_HEIGHT - 1, cy + ENTITY_RADIUS + BEAK_LENGTH);
 
-        for (int y = y1; y <= y2; y++) {
-            int dy = cy - y;
-            for (int x = x1; x <= x2; x++) {
-                int dx = cx - x;
-
-                if (sqrt((dx * dx) + (dy * dy)) <= ENTITY_RADIUS) {
-                    pixels[(y * 4) * WIN_WIDTH + x * 4 + 0] = 0;
-                    pixels[(y * 4) * WIN_WIDTH + x * 4 + 1] = 0;
-                    pixels[(y * 4) * WIN_WIDTH + x * 4 + 2] = 0;
-                }
-            }
-        }
+        render_entity(pixels, x1, y1, x2, y2, cx, cy, alpha);
     }
 
     return NULL;
+}
+
+static void render_entity(Uint8* pixels, int x1, int y1, int x2, int y2, int cx, int cy, int alpha)
+{
+    float angle2pi = (float)alpha / (float)DIR_ALPHA_PRECISION * 2.f * M_PI;
+    float alpha_x = cos(angle2pi);
+    float alpha_y = sin(angle2pi);
+    float beak_x = cx + alpha_x * BEAK_LENGTH;
+    float beak_y = cy + alpha_y * BEAK_LENGTH;
+
+    float beak1_x = cx + alpha_y * ENTITY_RADIUS;
+    float beak1_y = cy - alpha_x * ENTITY_RADIUS;
+
+    float beak2_x = cx - alpha_y * ENTITY_RADIUS;
+    float beak2_y = cy + alpha_x * ENTITY_RADIUS;
+
+    for (int y = y1; y <= y2; y++) {
+        int dy = cy - y;
+        for (int x = x1; x <= x2; x++) {
+            int dx = cx - x;
+
+            if (sqrt((dx * dx) + (dy * dy)) <= ENTITY_RADIUS ||
+                is_inside_triangle(beak_x, beak_y, beak1_x, beak1_y, beak2_x, beak2_y, (float)x, (float)y)) {
+                
+                pixels[(y * 4) * WIN_WIDTH + x * 4 + 0] = 0;
+                pixels[(y * 4) * WIN_WIDTH + x * 4 + 1] = 0;
+                pixels[(y * 4) * WIN_WIDTH + x * 4 + 2] = 0;
+            }
+        }
+
+    }
+}
+
+static float area(float x1, float y1, float x2, float y2, float x3, float y3)
+{
+    return fabs(x1*(y2-y3) + x2*(y3-y1) + x3*(y1-y2)) / 2.f;
+}
+
+static int is_inside_triangle(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+{
+    float totalArea = area(x1, y1, x2, y2, x3, y3);
+    float area1 = area(x1, y1, x2, y2, x4, y4);
+    float area2 = area(x2, y2, x3, y3, x4, y4);
+    float area3 = area(x3, y3, x1, y1, x4, y4);
+
+    if(abs(totalArea - (area1 + area2 + area3)) <= EPSILON) return 1;
+    else                                                    return 0;
 }

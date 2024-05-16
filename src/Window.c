@@ -1,5 +1,6 @@
 #include <time.h>
 
+#include "Calculating.h"
 #include "Render.h"
 #include "Window.h"
 
@@ -32,9 +33,9 @@ void window_prepare(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** r
     *pixels = calloc(sizeof(Uint8), PIX_SIZE);
 
     for (int i = 0; i < PIX_SIZE; i += 4) {
-        state->background[i + 0] = 70;
-        state->background[i + 1] = 70;
-        state->background[i + 2] = 70;
+        state->background[i + 0] = 100;
+        state->background[i + 1] = 100;
+        state->background[i + 2] = 100;
         state->background[i + 3] = 255;
     }
 
@@ -55,6 +56,8 @@ void window_cycle(SDL_Window** window, SDL_Texture** texture, SDL_Renderer** ren
             if (event.type == SDL_QUIT)
                 goto finally;
         }
+
+        update_state(state->entities);
         
         lock_texture(texture, &texture_pixels);
         render_state(*pixels, state);
